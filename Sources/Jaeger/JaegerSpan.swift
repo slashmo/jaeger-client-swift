@@ -13,6 +13,7 @@
 
 import Baggage
 import Tracing
+import W3CTraceContext
 
 public final class JaegerSpan: Span {
     public var attributes: SpanAttributes = [:]
@@ -36,10 +37,18 @@ public final class JaegerSpan: Span {
         self.operationName = operationName
         self.kind = kind
         self.startTimestamp = startTimestamp
-        self.context = context
 
-        // TODO: Set isRecording based on `sampled` flag.
-        self.isRecording = true
+        if context.traceContext != nil {
+            // TODO: Generate new parentID for this span
+            self.context = context
+            self.isRecording = false
+        } else {
+            var context = context
+            // TODO: Avoid force-unwrap for empty state: https://github.com/slashmo/swift-w3c-trace-context/issues/5
+            context.traceContext = TraceContext(parent: .random(), state: TraceState(rawValue: "")!)
+            self.context = context
+            self.isRecording = true
+        }
 
         self.record = record
     }

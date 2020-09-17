@@ -16,6 +16,12 @@ import Tracing
 import XCTest
 
 final class JaegerSpanTests: XCTestCase {
+    func test_adds_trace_context_if_not_yet_recorded() {
+        let span = JaegerSpan(operationName: "test", kind: .client, startTimestamp: .now(), context: .init()) { _ in }
+
+        XCTAssertNotNil(span.context.traceContext)
+    }
+
     func test_recordError_sets_exception_attributes() {
         let span = JaegerSpan(operationName: "test", kind: .client, startTimestamp: .now(), context: .init()) { _ in }
         XCTAssertEqual(span.attributes, [:])
