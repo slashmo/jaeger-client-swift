@@ -6,8 +6,13 @@ let package = Package(
     products: [
         .library(name: "Jaeger", targets: ["Jaeger"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/slashmo/gsoc-swift-tracing.git", .branch("main")),
+    ],
     targets: [
-        .target(name: "Jaeger"),
+        .target(name: "Jaeger", dependencies: [
+            .product(name: "Tracing", package: "gsoc-swift-tracing"),
+        ]),
         .testTarget(name: "JaegerTests", dependencies: [
             .target(name: "Jaeger"),
         ]),
