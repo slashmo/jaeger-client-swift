@@ -39,13 +39,13 @@ public final class JaegerSpan: Span {
         self.startTimestamp = startTimestamp
 
         if context.traceContext != nil {
-            // TODO: Generate new parentID for this span
+            var context = context
+            context.traceContext?.regenerateParentID()
             self.context = context
             self.isRecording = false
         } else {
             var context = context
-            // TODO: Avoid force-unwrap for empty state: https://github.com/slashmo/swift-w3c-trace-context/issues/5
-            context.traceContext = TraceContext(parent: .random(), state: TraceState(rawValue: "")!)
+            context.traceContext = TraceContext(parent: .random(), state: .none)
             self.context = context
             self.isRecording = true
         }

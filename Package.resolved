@@ -42,8 +42,8 @@
         "repositoryURL": "https://github.com/slashmo/swift-w3c-trace-context.git",
         "state": {
           "branch": null,
-          "revision": "b4245405c0d4c68a73c25f29c33b1c2515b0033a",
-          "version": "0.3.0"
+          "revision": "34dee324fa9a73ff43397dd5bff42af8d207a01c",
+          "version": "0.4.0"
         }
       }
     ]

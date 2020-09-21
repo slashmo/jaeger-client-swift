@@ -11,8 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Baggage
 import Jaeger
 import Tracing
+import W3CTraceContext
 import XCTest
 
 final class JaegerSpanTests: XCTestCase {
@@ -48,6 +50,25 @@ final class JaegerSpanTests: XCTestCase {
         waitForExpectations(timeout: 0.5)
 
         XCTAssert(recordedSpan === span)
+    }
+
+    func test_creates_trace_context_for_root_span() {
+        let span = JaegerSpan(operationName: "test", kind: .internal, startTimestamp: .now(), context: .init()) { _ in }
+
+        XCTAssertNotNil(span.context.traceContext)
+    }
+
+    func test_regenerates_parent_id_in_existing_trace_context() {
+        var context = BaggageContext()
+        context.traceContext = TraceContext(parent: .random(), state: TraceState(rawValue: "rojo=123")!)
+
+        let span = JaegerSpan(operationName: "test", kind: .server, startTimestamp: .now(), context: context) { _ in }
+
+        XCTAssertNotNil(span.context.traceContext)
+        XCTAssertEqual(span.context.traceContext?.state, context.traceContext?.state)
+        XCTAssertEqual(span.context.traceContext?.parent.traceID, context.traceContext?.parent.traceID)
+        XCTAssertNotEqual(span.context.traceContext?.parent.parentID, context.traceContext?.parent.parentID)
+        XCTAssertEqual(span.context.traceContext?.parent.traceFlags, context.traceContext?.parent.traceFlags)
     }
 }
 
