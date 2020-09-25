@@ -19,20 +19,19 @@ public final class JaegerSpan: Span {
     public var attributes: SpanAttributes = [:]
     public private(set) var isRecording: Bool
     public let startTimestamp: Timestamp
-    public private(set) var endTimestamp: Timestamp?
     public let context: BaggageContext
 
     private let operationName: String
     private let kind: SpanKind
     private let lock = Lock()
-    private let record: (JaegerSpan) -> Void
+    private let record: (EndedJaegerSpan) -> Void
 
-    public init(
+    init(
         operationName: String,
         kind: SpanKind,
         startTimestamp: Timestamp,
         context: BaggageContext,
-        record: @escaping (JaegerSpan) -> Void
+        record: @escaping (EndedJaegerSpan) -> Void
     ) {
         self.operationName = operationName
         self.kind = kind
@@ -67,9 +66,16 @@ public final class JaegerSpan: Span {
     public func addLink(_ link: SpanLink) {}
 
     public func end(at timestamp: Timestamp) {
-        self.lock.withLockVoid {
-            self.endTimestamp = .now()
-            self.record(self)
-        }
+        self.record(EndedJaegerSpan(endTimestamp: .now(), span: self))
+    }
+}
+
+final class EndedJaegerSpan {
+    let endTimestamp: Timestamp
+    let span: JaegerSpan
+
+    init(endTimestamp: Timestamp, span: JaegerSpan) {
+        self.endTimestamp = endTimestamp
+        self.span = span
     }
 }

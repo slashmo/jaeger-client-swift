@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 import Baggage
-import Jaeger
+@testable import Jaeger
 import Tracing
 import W3CTraceContext
 import XCTest
@@ -40,7 +40,7 @@ final class JaegerSpanTests: XCTestCase {
         let recordExpectation = expectation(description: "Expected the span to be recorded")
 
         let span = JaegerSpan(operationName: "test", kind: .client, startTimestamp: .now(), context: .init()) { span in
-            recordedSpan = span
+            recordedSpan = span.span
             recordExpectation.fulfill()
         }
         let endTimestamp = Timestamp.now()
