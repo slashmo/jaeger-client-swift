@@ -19,13 +19,13 @@ import XCTest
 
 final class JaegerSpanTests: XCTestCase {
     func test_adds_trace_context_if_not_yet_recorded() {
-        let span = JaegerSpan(operationName: "test", kind: .client, startTimestamp: .now(), context: .init()) { _ in }
+        let span = JaegerSpan()
 
         XCTAssertNotNil(span.context.traceContext)
     }
 
     func test_recordError_sets_exception_attributes() {
-        let span = JaegerSpan(operationName: "test", kind: .client, startTimestamp: .now(), context: .init()) { _ in }
+        let span = JaegerSpan()
         XCTAssertEqual(span.attributes, [:])
 
         span.recordError(TestError.test)
@@ -35,25 +35,33 @@ final class JaegerSpanTests: XCTestCase {
         ])
     }
 
-    func test_calls_record_on_end() {
-        var recordedSpan: JaegerSpan?
-        let recordExpectation = expectation(description: "Expected the span to be recorded")
+    func test_calls_report_on_end() {
+        var reportedSpan: JaegerSpan?
 
-        let span = JaegerSpan(operationName: "test", kind: .client, startTimestamp: .now(), context: .init()) { span in
-            recordedSpan = span.span
-            recordExpectation.fulfill()
+        let span = JaegerSpan { span in
+            reportedSpan = span
         }
-        let endTimestamp = Timestamp.now()
+        span.end()
 
-        span.end(at: endTimestamp)
+        XCTAssert(reportedSpan === span)
+    }
 
-        waitForExpectations(timeout: 0.5)
+    func test_calls_report_on_end_only_once() {
+        var invocationCount = 0
 
-        XCTAssert(recordedSpan === span)
+        let span = JaegerSpan { _ in
+            invocationCount += 1
+        }
+
+        span.end()
+        span.end()
+        span.end()
+
+        XCTAssertEqual(invocationCount, 1)
     }
 
     func test_creates_trace_context_for_root_span() {
-        let span = JaegerSpan(operationName: "test", kind: .internal, startTimestamp: .now(), context: .init()) { _ in }
+        let span = JaegerSpan()
 
         XCTAssertNotNil(span.context.traceContext)
     }
@@ -62,13 +70,22 @@ final class JaegerSpanTests: XCTestCase {
         var context = BaggageContext()
         context.traceContext = TraceContext(parent: .random(), state: TraceState(rawValue: "rojo=123")!)
 
-        let span = JaegerSpan(operationName: "test", kind: .server, startTimestamp: .now(), context: context) { _ in }
+        let span = JaegerSpan(context: context)
 
         XCTAssertNotNil(span.context.traceContext)
         XCTAssertEqual(span.context.traceContext?.state, context.traceContext?.state)
         XCTAssertEqual(span.context.traceContext?.parent.traceID, context.traceContext?.parent.traceID)
         XCTAssertNotEqual(span.context.traceContext?.parent.parentID, context.traceContext?.parent.parentID)
         XCTAssertEqual(span.context.traceContext?.parent.traceFlags, context.traceContext?.parent.traceFlags)
+    }
+}
+
+extension JaegerSpan {
+    fileprivate convenience init(
+        context: BaggageContext = .init(),
+        onReport: @escaping (JaegerSpan) -> Void = { _ in }
+    ) {
+        self.init(operationName: "test", kind: .server, startTimestamp: .now(), context: context, onReport: onReport)
     }
 }
 
