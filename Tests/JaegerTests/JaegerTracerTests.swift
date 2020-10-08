@@ -145,7 +145,7 @@ private final class TestSpanRecorder: SpanRecorder {
         self.eventLoop = eventLoop
     }
 
-    func flush(spans: ArraySlice<JaegerSpan>) -> EventLoopFuture<Void> {
+    func flush(spans: ArraySlice<JaegerSpan>, inService serviceName: String) -> EventLoopFuture<Void> {
         self.flushedSpans.append(contentsOf: spans)
         self.numberOfFlushes += 1
         return self.response
