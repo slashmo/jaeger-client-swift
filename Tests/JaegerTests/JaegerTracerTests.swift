@@ -31,15 +31,15 @@ final class JaegerTracerTests: XCTestCase {
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         let traceContext = TraceContext(parent: .random(), state: .none)
-        var context = BaggageContext()
+        var baggage = Baggage.topLevel
 
         tracer.extract(
             [TraceParent.headerName: traceContext.parent.rawValue, TraceState.headerName: traceContext.state.rawValue],
-            into: &context,
+            into: &baggage,
             using: HTTPHeadersExtractor()
         )
 
-        XCTAssertEqual(context.traceContext, traceContext)
+        XCTAssertEqual(baggage.traceContext, traceContext)
     }
 
     func test_extract_missing_w3c_trace_context_into_baggage() {
@@ -48,11 +48,11 @@ final class JaegerTracerTests: XCTestCase {
         let settings = JaegerTracer.Settings(serviceName: "test", recordingStrategy: .custom(recorder))
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
-        var context = BaggageContext()
+        var baggage = Baggage.topLevel
 
-        tracer.extract([:], into: &context, using: HTTPHeadersExtractor())
+        tracer.extract([:], into: &baggage, using: HTTPHeadersExtractor())
 
-        XCTAssertNil(context.traceContext)
+        XCTAssertNil(baggage.traceContext)
     }
 
     func test_extract_missing_w3c_trace_context_without_state_into_baggage() {
@@ -62,15 +62,15 @@ final class JaegerTracerTests: XCTestCase {
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         let traceContext = TraceContext(parent: .random(), state: .none)
-        var context = BaggageContext()
+        var baggage = Baggage.topLevel
 
         tracer.extract(
             [TraceParent.headerName: traceContext.parent.rawValue],
-            into: &context,
+            into: &baggage,
             using: HTTPHeadersExtractor()
         )
 
-        XCTAssertEqual(context.traceContext, traceContext)
+        XCTAssertEqual(baggage.traceContext, traceContext)
     }
 
     func test_inject_w3c_trace_context_into_headers() {
@@ -80,11 +80,11 @@ final class JaegerTracerTests: XCTestCase {
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         let traceContext = TraceContext(parent: .random(), state: .none)
-        var context = BaggageContext()
-        context.traceContext = traceContext
+        var baggage = Baggage.topLevel
+        baggage.traceContext = traceContext
         var headers = HTTPHeaders()
 
-        tracer.inject(context, into: &headers, using: HTTPHeadersInjector())
+        tracer.inject(baggage, into: &headers, using: HTTPHeadersInjector())
 
         XCTAssertEqual(headers.count, 2)
         XCTAssertEqual(headers.first(name: TraceParent.headerName), traceContext.parent.rawValue)
@@ -97,10 +97,10 @@ final class JaegerTracerTests: XCTestCase {
         let settings = JaegerTracer.Settings(serviceName: "test", recordingStrategy: .custom(recorder))
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
-        let context = BaggageContext()
+        let baggage = Baggage.topLevel
         var headers = HTTPHeaders()
 
-        tracer.inject(context, into: &headers, using: HTTPHeadersInjector())
+        tracer.inject(baggage, into: &headers, using: HTTPHeadersInjector())
 
         XCTAssertTrue(headers.isEmpty)
     }
@@ -117,8 +117,7 @@ final class JaegerTracerTests: XCTestCase {
         var spans = [JaegerSpan]()
 
         for _ in 0 ..< 10 {
-            let span = tracer
-                .startSpan(named: "test", context: BaggageContext(), ofKind: .server, at: .now())
+            let span = tracer.startSpan(named: "test", baggage: .topLevel, ofKind: .server, at: .now())
             spans.append(span as! JaegerSpan)
             span.end()
         }

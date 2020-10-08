@@ -11,9 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Baggage
+import BaggageContext
 import Instrumentation
+import Logging
 import NIO
+import NIOConcurrencyHelpers
 import Tracing
 import W3CTraceContext
 
@@ -21,58 +23,51 @@ public final class JaegerTracer: Tracer {
     private var spansToEmit = [JaegerSpan]()
 
     private let eventLoop: EventLoop
-    private let flushInterval = TimeAmount.seconds(1)
-    private let flushBatchSize = 100
+    private let settings: Settings
     private let recorder: SpanRecorder
 
     private var flushTask: RepeatedTask!
 
     private let lock = Lock()
+    private let logger = Logger(label: "JaegerTracer")
 
     public init(settings: Settings, group: EventLoopGroup) {
         self.eventLoop = group.next()
+        self.settings = settings
         switch settings.recordingStrategy {
         case .custom(let recorder):
             self.recorder = recorder
         }
         self.flushTask = self.eventLoop
-            .scheduleRepeatedAsyncTask(initialDelay: self.flushInterval, delay: self.flushInterval) { _ in
+            .scheduleRepeatedAsyncTask(initialDelay: self.settings.flushInterval, delay: self.settings.flushInterval) { _ in
                 self.flush()
             }
     }
 
-    public func extract<Carrier, Extractor>(
-        _ carrier: Carrier,
-        into context: inout BaggageContext,
-        using extractor: Extractor
-    )
+    public func extract<Carrier, Extractor>(_ carrier: Carrier, into baggage: inout Baggage, using extractor: Extractor)
         where
         Carrier == Extractor.Carrier,
         Extractor: ExtractorProtocol
     {
         if let parent = extractor.extract(key: TraceParent.headerName, from: carrier) {
             let state = extractor.extract(key: TraceState.headerName, from: carrier) ?? ""
-            context.traceContext = TraceContext(parent: parent, state: state)
+            baggage.traceContext = TraceContext(parent: parent, state: state)
         }
     }
 
-    public func inject<Carrier, Injector>(
-        _ context: BaggageContext,
-        into carrier: inout Carrier,
-        using injector: Injector
-    )
+    public func inject<Carrier, Injector>(_ baggage: Baggage, into carrier: inout Carrier, using injector: Injector)
         where
         Carrier == Injector.Carrier,
         Injector: InjectorProtocol
     {
-        guard let traceContext = context.traceContext else { return }
+        guard let traceContext = baggage.traceContext else { return }
         injector.inject(traceContext.parent.rawValue, forKey: TraceParent.headerName, into: &carrier)
         injector.inject(traceContext.state.rawValue, forKey: TraceState.headerName, into: &carrier)
     }
 
     public func startSpan(
         named operationName: String,
-        context: BaggageContextCarrier,
+        baggage: Baggage,
         ofKind kind: SpanKind,
         at timestamp: Timestamp
     ) -> Span {
@@ -80,7 +75,7 @@ public final class JaegerTracer: Tracer {
             operationName: operationName,
             kind: kind,
             startTimestamp: timestamp,
-            context: context.baggage
+            baggage: baggage
         ) { [weak self] endedSpan in
             self?.spansToEmit.append(endedSpan)
         }
@@ -93,10 +88,10 @@ public final class JaegerTracer: Tracer {
     @discardableResult
     private func flush() -> EventLoopFuture<Void> {
         let spansToFlush: ArraySlice<JaegerSpan> = self.lock.withLock {
-            let spans = self.spansToEmit.prefix(self.flushBatchSize)
+            let spans = self.spansToEmit.prefix(self.settings.flushBatchSize)
             self.spansToEmit.removeFirst(spans.count)
             return spans
         }
-        return self.recorder.flush(spans: spansToFlush)
+        return self.recorder.flush(spans: spansToFlush, inService: self.settings.serviceName)
     }
 }

@@ -14,8 +14,8 @@
 import Baggage
 import W3CTraceContext
 
-extension BaggageContext {
-    private enum TraceContextKey: BaggageContextKey {
+extension Baggage {
+    private enum TraceContextKey: Baggage.Key {
         typealias Value = TraceContext
     }
 

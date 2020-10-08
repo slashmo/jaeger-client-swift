@@ -15,5 +15,5 @@ import NIO
 import Tracing
 
 public protocol SpanRecorder {
-    func flush(spans: ArraySlice<JaegerSpan>) -> EventLoopFuture<Void>
+    func flush(spans: ArraySlice<JaegerSpan>, inService serviceName: String) -> EventLoopFuture<Void>
 }

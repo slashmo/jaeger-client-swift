@@ -21,7 +21,7 @@ final class JaegerSpanTests: XCTestCase {
     func test_adds_trace_context_if_not_yet_recorded() {
         let span = JaegerSpan()
 
-        XCTAssertNotNil(span.context.traceContext)
+        XCTAssertNotNil(span.baggage.traceContext)
     }
 
     func test_recordError_sets_exception_attributes() {
@@ -63,29 +63,29 @@ final class JaegerSpanTests: XCTestCase {
     func test_creates_trace_context_for_root_span() {
         let span = JaegerSpan()
 
-        XCTAssertNotNil(span.context.traceContext)
+        XCTAssertNotNil(span.baggage.traceContext)
     }
 
     func test_regenerates_parent_id_in_existing_trace_context() {
-        var context = BaggageContext()
-        context.traceContext = TraceContext(parent: .random(), state: TraceState(rawValue: "rojo=123")!)
+        var baggage = Baggage.topLevel
+        baggage.traceContext = TraceContext(parent: .random(), state: TraceState(rawValue: "rojo=123")!)
 
-        let span = JaegerSpan(context: context)
+        let span = JaegerSpan(baggage: baggage)
 
-        XCTAssertNotNil(span.context.traceContext)
-        XCTAssertEqual(span.context.traceContext?.state, context.traceContext?.state)
-        XCTAssertEqual(span.context.traceContext?.parent.traceID, context.traceContext?.parent.traceID)
-        XCTAssertNotEqual(span.context.traceContext?.parent.parentID, context.traceContext?.parent.parentID)
-        XCTAssertEqual(span.context.traceContext?.parent.traceFlags, context.traceContext?.parent.traceFlags)
+        XCTAssertNotNil(span.baggage.traceContext)
+        XCTAssertEqual(span.baggage.traceContext?.state, baggage.traceContext?.state)
+        XCTAssertEqual(span.baggage.traceContext?.parent.traceID, baggage.traceContext?.parent.traceID)
+        XCTAssertNotEqual(span.baggage.traceContext?.parent.parentID, baggage.traceContext?.parent.parentID)
+        XCTAssertEqual(span.baggage.traceContext?.parent.traceFlags, baggage.traceContext?.parent.traceFlags)
     }
 }
 
 extension JaegerSpan {
     fileprivate convenience init(
-        context: BaggageContext = .init(),
+        baggage: Baggage = .topLevel,
         onReport: @escaping (JaegerSpan) -> Void = { _ in }
     ) {
-        self.init(operationName: "test", kind: .server, startTimestamp: .now(), context: context, onReport: onReport)
+        self.init(operationName: "test", kind: .server, startTimestamp: .now(), baggage: baggage, onReport: onReport)
     }
 }
 

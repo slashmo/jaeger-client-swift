@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 import Baggage
+import NIOConcurrencyHelpers
 import Tracing
 import W3CTraceContext
 
@@ -19,11 +20,12 @@ public final class JaegerSpan: Span {
     public var attributes: SpanAttributes = [:]
     public private(set) var isRecording: Bool
     public let startTimestamp: Timestamp
-    public let context: BaggageContext
+    public let baggage: Baggage
     public private(set) var endTimestamp: Timestamp?
+    public let operationName: String
+    public let kind: SpanKind
+    public private(set) var links = [SpanLink]()
 
-    let operationName: String
-    let kind: SpanKind
     private let lock = Lock()
     private let onReport: (JaegerSpan) -> Void
 
@@ -31,22 +33,22 @@ public final class JaegerSpan: Span {
         operationName: String,
         kind: SpanKind,
         startTimestamp: Timestamp,
-        context: BaggageContext,
+        baggage: Baggage,
         onReport: @escaping (JaegerSpan) -> Void
     ) {
         self.operationName = operationName
         self.kind = kind
         self.startTimestamp = startTimestamp
 
-        if context.traceContext != nil {
-            var context = context
-            context.traceContext?.regenerateParentID()
-            self.context = context
+        if baggage.traceContext != nil {
+            var baggage = baggage
+            baggage.traceContext?.regenerateParentID()
+            self.baggage = baggage
             self.isRecording = false
         } else {
-            var context = context
-            context.traceContext = TraceContext(parent: .random(), state: .none)
-            self.context = context
+            var baggage = baggage
+            baggage.traceContext = TraceContext(parent: .random(), state: .none)
+            self.baggage = baggage
             self.isRecording = true
         }
 
@@ -64,7 +66,11 @@ public final class JaegerSpan: Span {
         }
     }
 
-    public func addLink(_ link: SpanLink) {}
+    public func addLink(_ link: SpanLink) {
+        self.lock.withLockVoid {
+            links.append(link)
+        }
+    }
 
     public func end(at timestamp: Timestamp) {
         self.lock.withLockVoid {

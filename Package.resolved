@@ -2,12 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "swift-baggage-context",
-        "repositoryURL": "https://github.com/slashmo/gsoc-swift-baggage-context.git",
+        "package": "swift-context",
+        "repositoryURL": "https://github.com/slashmo/gsoc-swift-baggage-context",
         "state": {
           "branch": null,
-          "revision": "9be28a84507395a22af0278600b324c22d7277be",
-          "version": "0.4.0"
+          "revision": "24e244b4aef3594ddceeecf0100da69ddafecee5",
+          "version": "0.5.0"
         }
       },
       {
@@ -15,7 +15,7 @@
         "repositoryURL": "https://github.com/slashmo/gsoc-swift-tracing.git",
         "state": {
           "branch": "main",
-          "revision": "44ceea37f6ddabc086ef9b48aea4396d4cb37068",
+          "revision": "87ada5195211839070481ef51cd4e01e05ab8554",
           "version": null
         }
       },
@@ -30,11 +30,11 @@
       },
       {
         "package": "swift-nio",
-        "repositoryURL": "https://github.com/apple/swift-nio.git",
+        "repositoryURL": "https://github.com/slashmo/swift-nio.git",
         "state": {
-          "branch": null,
-          "revision": "96db8838be60fcbb993fa738e1120fb7f4b99c43",
-          "version": "2.22.1"
+          "branch": "feature/baggage-context",
+          "revision": "ad1bc154f5b6f3e9efcf4f30a61be2e134a4183a",
+          "version": null
         }
       },
       {
