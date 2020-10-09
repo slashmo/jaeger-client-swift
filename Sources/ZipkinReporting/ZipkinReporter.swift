@@ -19,15 +19,23 @@ import NIO
 import NIOHTTP1
 
 extension JaegerTracer.Reporter {
+    /// Report spans using Jaeger's Zipkin-V2-compatible endpoint, submitting them as JSON objects over HTTP.
+    /// - Parameters:
+    ///   - collectorHost: The collector host of your Jaeger instance.
+    ///   - collectorPort: The collector port of your Jaeger instance that exposes the Zipkin-compatible API.
+    ///   - userAgent: The User-Agent header value used when reporting spans.
+    ///   - eventLoopGroup: The `EventLoopGroup` which the reporter runs in.
+    /// - Returns: A span reporter that uses Jaeger's Zipkin-V2-compatible HTTP endpoint.
     public static func zipkin(
         collectorHost: String,
         collectorPort: UInt,
-        userAgent: String,
+        userAgent: String = "Swift Jaeger Tracer Zipkin Span Reporter",
         eventLoopGroup: EventLoopGroup
     ) -> Self {
         .custom(ZipkinReporter(
             collectorHost: collectorHost,
             collectorPort: collectorPort,
+            userAgent: userAgent,
             eventLoopGroup: eventLoopGroup
         ))
     }
@@ -38,10 +46,12 @@ private final class ZipkinReporter: SpanReporter {
     private let jsonEncoder = JSONEncoder()
     private let collectorHost: String
     private let collectorPort: UInt
+    private let userAgent: String
 
-    fileprivate init(collectorHost: String, collectorPort: UInt, eventLoopGroup: EventLoopGroup) {
+    fileprivate init(collectorHost: String, collectorPort: UInt, userAgent: String, eventLoopGroup: EventLoopGroup) {
         self.collectorHost = collectorHost
         self.collectorPort = collectorPort
+        self.userAgent = userAgent
         self.eventLoopGroup = eventLoopGroup
     }
 
@@ -62,7 +72,8 @@ private final class ZipkinReporter: SpanReporter {
                             let clientHandler = HTTPClientHandler(
                                 sendingSpanData: encodedZipkinSpans,
                                 toHost: self.collectorHost,
-                                port: self.collectorPort
+                                port: self.collectorPort,
+                                userAgent: self.userAgent
                             )
                             return channel.pipeline.addHandler(clientHandler)
                         }
@@ -81,11 +92,13 @@ private final class HTTPClientHandler: ChannelInboundHandler {
     private let spanData: Data
     private let host: String
     private let port: UInt
+    private let userAgent: String
 
-    init(sendingSpanData spanData: Data, toHost host: String, port: UInt) {
+    init(sendingSpanData spanData: Data, toHost host: String, port: UInt, userAgent: String) {
         self.spanData = spanData
         self.host = host
         self.port = port
+        self.userAgent = userAgent
     }
 
     func channelActive(context: ChannelHandlerContext) {
@@ -95,6 +108,7 @@ private final class HTTPClientHandler: ChannelInboundHandler {
             "Content-Type": "application/json; charset=utf-8",
             "Content-Length": "\(bodyBuffer.readableBytes)",
             "Host": "\(self.host):\(self.port)",
+            "User-Agent": self.userAgent,
         ]
         let requestHead = HTTPRequestHead(
             version: .init(major: 1, minor: 1),
