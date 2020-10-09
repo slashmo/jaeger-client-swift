@@ -11,12 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Logging
 import NIO
 
 extension JaegerTracer {
     public struct Settings {
-        public var serviceName: String
-        public var reporter: Reporter
+        public let serviceName: String
+        public let reporter: Reporter
+        public let logger: Logger
+
         public var flushInterval: TimeAmount
         public var flushTimeout: TimeAmount
         public var flushBatchSize: Int
@@ -25,6 +28,7 @@ extension JaegerTracer {
         public init(
             serviceName: String,
             reporter: Reporter,
+            logger: Logger = Logger(label: "JaegerTracer"),
             flushInterval: TimeAmount = .seconds(1),
             flushTimeout: TimeAmount = .seconds(5),
             flushBatchSize: Int = 100,
@@ -32,6 +36,7 @@ extension JaegerTracer {
         ) {
             self.serviceName = serviceName
             self.reporter = reporter
+            self.logger = logger
             self.flushInterval = flushInterval
             self.flushTimeout = flushTimeout
             self.flushBatchSize = flushBatchSize

@@ -29,7 +29,6 @@ public final class JaegerTracer: Tracer {
     private var flushTask: RepeatedTask!
 
     private let lock = Lock()
-    private let logger = Logger(label: "JaegerTracer")
 
     public init(settings: Settings, group: EventLoopGroup) {
         self.eventLoop = group.next()
@@ -39,7 +38,10 @@ public final class JaegerTracer: Tracer {
             self.reporter = reporter
         }
         self.flushTask = self.eventLoop
-            .scheduleRepeatedAsyncTask(initialDelay: self.settings.flushInterval, delay: self.settings.flushInterval) { _ in
+            .scheduleRepeatedAsyncTask(
+                initialDelay: self.settings.flushInterval,
+                delay: self.settings.flushInterval
+            ) { _ in
                 self.flush()
             }
     }
