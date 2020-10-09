@@ -26,7 +26,7 @@ extension SpanKind: Encodable {
         case .producer:
             try container.encode("PRODUCER")
         case .internal:
-            try container.encode("SERVER")
+            try container.encodeNil()
         }
     }
 }

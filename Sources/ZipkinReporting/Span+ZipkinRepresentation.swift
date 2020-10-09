@@ -22,7 +22,7 @@ extension JaegerSpan {
         let name: String
         let timestamp: Int64
         let duration: Int64
-        let kind: SpanKind
+        let kind: SpanKind?
         let localEndpoint: Endpoint
         let remoteEndpoint: Endpoint?
         let tags: [String: String]

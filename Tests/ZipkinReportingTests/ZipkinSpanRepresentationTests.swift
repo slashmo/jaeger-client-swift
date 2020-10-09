@@ -18,7 +18,7 @@ import W3CTraceContext
 import XCTest
 @testable import ZipkinReporting
 
-final class SpanEncodingTests: XCTestCase {
+final class ZipkinSpanRepresentationTests: XCTestCase {
     func test_encode_span_to_zipkin_json() {
         var baggage = Baggage.topLevel
         baggage.traceContext = TraceContext(parent: .random(), state: .none)
