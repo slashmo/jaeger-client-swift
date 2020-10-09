@@ -5,7 +5,7 @@ let package = Package(
     name: "jaeger-client-swift",
     products: [
         .library(name: "Jaeger", targets: ["Jaeger"]),
-        .library(name: "ZipkinRecordingStrategy", targets: ["ZipkinRecordingStrategy"]),
+        .library(name: "ZipkinReporting", targets: ["ZipkinReporting"]),
     ],
     dependencies: [
         .package(name: "swift-context", url: "https://github.com/slashmo/gsoc-swift-baggage-context", from: "0.5.0"),
@@ -25,13 +25,13 @@ let package = Package(
             .target(name: "Jaeger"),
             .product(name: "NIOInstrumentation", package: "gsoc-swift-tracing"),
         ]),
-        .target(name: "ZipkinRecordingStrategy", dependencies: [
+        .target(name: "ZipkinReporting", dependencies: [
             .target(name: "Jaeger"),
             .product(name: "NIO", package: "swift-nio"),
             .product(name: "NIOHTTP1", package: "swift-nio"),
         ]),
-        .testTarget(name: "ZipkinRecordingStrategyTests", dependencies: [
-            .target(name: "ZipkinRecordingStrategy"),
+        .testTarget(name: "ZipkinReportingTests", dependencies: [
+            .target(name: "ZipkinReporting"),
             .product(name: "BaggageContext", package: "swift-context"),
         ]),
     ]

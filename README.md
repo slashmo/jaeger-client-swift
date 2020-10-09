@@ -35,10 +35,10 @@ Then, add the `Jaeger` library to the target(s) you want to use it with:
 Now that you installed the Jaeger client you can use it in your project by bootstrapping the `InstrumentationSystem` with an instance of `JaegerClient`:
 
 ```swift
-let recordingStrategy = // ... see instructions below
+let reporter = // ... see instructions below
 let jaegerSettings = JaegerTracer.Settings(
     serviceName: "frontend", 
-    recordingStrategy: recordingStrategy
+    reporter: reporter
 )
 let jaegerTracer = JaegerTracer(
     settings: jaegerSettings, 
@@ -47,9 +47,10 @@ let jaegerTracer = JaegerTracer(
 InstrumentationSystem.bootstrap(jaegerTracer)
 ```
 
-### Recording Strategy
+### Reporting
 
-Jaeger supports different [Span reporting APIs](https://www.jaegertracing.io/docs/1.20/apis/#span-reporting-apis), but not all are supported (yet) by this client implementation. Here's a list of the supported recording strategies:
+Jaeger supports different [Span reporting APIs](https://www.jaegertracing.io/docs/1.20/apis/#span-reporting-apis), but
+not all are supported (yet) by this client implementation. Here's a list of the supported reporters:
 
 #### Zipkin
 
@@ -58,7 +59,7 @@ https://www.jaegertracing.io/docs/1.20/apis/#zipkin-formats-stable
 > Make sure to set `COLLECTOR_ZIPKIN_HTTP_PORT` accordingly when configuring your Jaeger instance
 
 ```swift
-let recordingStrategy = JaegerTracer.RecordingStrategy.zipkin(
+let reporter = JaegerTracer.Reporter.zipkin(
     collectorHost: "localhost",
     collectorPort: 9411,
     eventLoopGroup: eventLoopGroup

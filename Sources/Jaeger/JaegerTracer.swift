@@ -24,7 +24,7 @@ public final class JaegerTracer: Tracer {
 
     private let eventLoop: EventLoop
     private let settings: Settings
-    private let recorder: SpanRecorder
+    private let reporter: SpanReporter
 
     private var flushTask: RepeatedTask!
 
@@ -34,9 +34,9 @@ public final class JaegerTracer: Tracer {
     public init(settings: Settings, group: EventLoopGroup) {
         self.eventLoop = group.next()
         self.settings = settings
-        switch settings.recordingStrategy {
-        case .custom(let recorder):
-            self.recorder = recorder
+        switch settings.reporter {
+        case .custom(let reporter):
+            self.reporter = reporter
         }
         self.flushTask = self.eventLoop
             .scheduleRepeatedAsyncTask(initialDelay: self.settings.flushInterval, delay: self.settings.flushInterval) { _ in
@@ -92,6 +92,6 @@ public final class JaegerTracer: Tracer {
             self.spansToEmit.removeFirst(spans.count)
             return spans
         }
-        return self.recorder.flush(spans: spansToFlush, inService: self.settings.serviceName)
+        return self.reporter.flush(spans: spansToFlush, inService: self.settings.serviceName)
     }
 }

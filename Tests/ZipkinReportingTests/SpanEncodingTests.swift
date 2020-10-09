@@ -16,7 +16,7 @@ import Foundation
 @testable import Jaeger
 import W3CTraceContext
 import XCTest
-@testable import ZipkinRecordingStrategy
+@testable import ZipkinReporting
 
 final class SpanEncodingTests: XCTestCase {
     func test_encode_span_to_zipkin_json() {

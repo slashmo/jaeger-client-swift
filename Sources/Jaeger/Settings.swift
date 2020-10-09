@@ -16,7 +16,7 @@ import NIO
 extension JaegerTracer {
     public struct Settings {
         public var serviceName: String
-        public var recordingStrategy: RecordingStrategy
+        public var reporter: Reporter
         public var flushInterval: TimeAmount
         public var flushTimeout: TimeAmount
         public var flushBatchSize: Int
@@ -24,14 +24,14 @@ extension JaegerTracer {
 
         public init(
             serviceName: String,
-            recordingStrategy: RecordingStrategy,
+            reporter: Reporter,
             flushInterval: TimeAmount = .seconds(1),
             flushTimeout: TimeAmount = .seconds(5),
             flushBatchSize: Int = 100,
             flushMaxBacklog: Int = 1000
         ) {
             self.serviceName = serviceName
-            self.recordingStrategy = recordingStrategy
+            self.reporter = reporter
             self.flushInterval = flushInterval
             self.flushTimeout = flushTimeout
             self.flushBatchSize = flushBatchSize
@@ -39,7 +39,7 @@ extension JaegerTracer {
         }
     }
 
-    public enum RecordingStrategy {
-        case custom(SpanRecorder)
+    public enum Reporter {
+        case custom(SpanReporter)
     }
 }

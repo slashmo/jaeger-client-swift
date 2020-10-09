@@ -26,8 +26,8 @@ final class JaegerTracerTests: XCTestCase {
 
     func test_extract_w3c_trace_context_into_baggage() {
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        let recorder = TestSpanRecorder(eventLoop: eventLoopGroup.next())
-        let settings = JaegerTracer.Settings(serviceName: "test", recordingStrategy: .custom(recorder))
+        let reporter = TestSpanReporter(eventLoop: eventLoopGroup.next())
+        let settings = JaegerTracer.Settings(serviceName: "test", reporter: .custom(reporter))
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         let traceContext = TraceContext(parent: .random(), state: .none)
@@ -44,8 +44,8 @@ final class JaegerTracerTests: XCTestCase {
 
     func test_extract_missing_w3c_trace_context_into_baggage() {
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        let recorder = TestSpanRecorder(eventLoop: eventLoopGroup.next())
-        let settings = JaegerTracer.Settings(serviceName: "test", recordingStrategy: .custom(recorder))
+        let reporter = TestSpanReporter(eventLoop: eventLoopGroup.next())
+        let settings = JaegerTracer.Settings(serviceName: "test", reporter: .custom(reporter))
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         var baggage = Baggage.topLevel
@@ -57,8 +57,8 @@ final class JaegerTracerTests: XCTestCase {
 
     func test_extract_missing_w3c_trace_context_without_state_into_baggage() {
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        let recorder = TestSpanRecorder(eventLoop: eventLoopGroup.next())
-        let settings = JaegerTracer.Settings(serviceName: "test", recordingStrategy: .custom(recorder))
+        let reporter = TestSpanReporter(eventLoop: eventLoopGroup.next())
+        let settings = JaegerTracer.Settings(serviceName: "test", reporter: .custom(reporter))
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         let traceContext = TraceContext(parent: .random(), state: .none)
@@ -75,8 +75,8 @@ final class JaegerTracerTests: XCTestCase {
 
     func test_inject_w3c_trace_context_into_headers() {
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        let recorder = TestSpanRecorder(eventLoop: eventLoopGroup.next())
-        let settings = JaegerTracer.Settings(serviceName: "test", recordingStrategy: .custom(recorder))
+        let reporter = TestSpanReporter(eventLoop: eventLoopGroup.next())
+        let settings = JaegerTracer.Settings(serviceName: "test", reporter: .custom(reporter))
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         let traceContext = TraceContext(parent: .random(), state: .none)
@@ -93,8 +93,8 @@ final class JaegerTracerTests: XCTestCase {
 
     func test_inject_missing_w3c_trace_context_into_headers() {
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        let recorder = TestSpanRecorder(eventLoop: eventLoopGroup.next())
-        let settings = JaegerTracer.Settings(serviceName: "test", recordingStrategy: .custom(recorder))
+        let reporter = TestSpanReporter(eventLoop: eventLoopGroup.next())
+        let settings = JaegerTracer.Settings(serviceName: "test", reporter: .custom(reporter))
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         let baggage = Baggage.topLevel
@@ -107,11 +107,11 @@ final class JaegerTracerTests: XCTestCase {
 
     // MARK: - Flushing
 
-    func test_emits_spans_to_recorder_on_forceFlush() {
+    func test_emits_spans_to_reporter_on_forceFlush() {
         let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        let recorder = TestSpanRecorder(eventLoop: eventLoopGroup.next())
+        let reporter = TestSpanReporter(eventLoop: eventLoopGroup.next())
 
-        let settings = JaegerTracer.Settings(serviceName: "test", recordingStrategy: .custom(recorder))
+        let settings = JaegerTracer.Settings(serviceName: "test", reporter: .custom(reporter))
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
         var spans = [JaegerSpan]()
@@ -122,19 +122,19 @@ final class JaegerTracerTests: XCTestCase {
             span.end()
         }
 
-        XCTAssertEqual(recorder.numberOfFlushes, 0)
+        XCTAssertEqual(reporter.numberOfFlushes, 0)
 
         tracer.forceFlush()
 
-        XCTAssertEqual(recorder.numberOfFlushes, 1)
-        XCTAssertEqual(recorder.flushedSpans.count, 10)
-        for (index, span) in recorder.flushedSpans.enumerated() {
+        XCTAssertEqual(reporter.numberOfFlushes, 1)
+        XCTAssertEqual(reporter.flushedSpans.count, 10)
+        for (index, span) in reporter.flushedSpans.enumerated() {
             XCTAssert(spans[index] === span)
         }
     }
 }
 
-private final class TestSpanRecorder: SpanRecorder {
+private final class TestSpanReporter: SpanReporter {
     private(set) var flushedSpans = [JaegerSpan]()
     private(set) var numberOfFlushes = 0
     private let eventLoop: EventLoop

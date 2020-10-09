@@ -18,19 +18,22 @@ import Logging
 import NIO
 import NIOHTTP1
 
-extension JaegerTracer.RecordingStrategy {
-    public static func zipkin(collectorHost: String, collectorPort: UInt, eventLoopGroup: EventLoopGroup) -> Self {
-        .custom(
-            ZipkinJSONHTTPRecorder(
-                collectorHost: collectorHost,
-                collectorPort: collectorPort,
-                eventLoopGroup: eventLoopGroup
-            )
-        )
+extension JaegerTracer.Reporter {
+    public static func zipkin(
+        collectorHost: String,
+        collectorPort: UInt,
+        userAgent: String,
+        eventLoopGroup: EventLoopGroup
+    ) -> Self {
+        .custom(ZipkinReporter(
+            collectorHost: collectorHost,
+            collectorPort: collectorPort,
+            eventLoopGroup: eventLoopGroup
+        ))
     }
 }
 
-private final class ZipkinJSONHTTPRecorder: SpanRecorder {
+private final class ZipkinReporter: SpanReporter {
     private let eventLoopGroup: EventLoopGroup
     private let jsonEncoder = JSONEncoder()
     private let collectorHost: String
