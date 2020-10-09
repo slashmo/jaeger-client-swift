@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   unit-test:
     runs-on: ubuntu-latest
-    container: swift:5.2
+    container: swift:5.3
     steps:
       - name: Checkout
         uses: actions/checkout@v1
