@@ -1,6 +1,6 @@
 # Swift Jaeger Client
 
-[![Swift 5.3](https://img.shields.io/badge/Swift-5.2-ED523F.svg?style=flat)](https://swift.org/download/)
+[![Swift 5.3](https://img.shields.io/badge/Swift-5.3-ED523F.svg?style=flat)](https://swift.org/download/)
 
 This Swift package provides a **WIP** client for Jaeger Tracing implemented using the
 [Swift Tracing](https://github.com/slashmo/gsoc-swift-tracing) set of APIs.
