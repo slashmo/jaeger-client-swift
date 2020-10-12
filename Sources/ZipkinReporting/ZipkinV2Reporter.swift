@@ -26,13 +26,13 @@ extension JaegerTracer.Reporter {
     ///   - userAgent: The User-Agent header value used when reporting spans.
     ///   - eventLoopGroup: The `EventLoopGroup` which the reporter runs in.
     /// - Returns: A span reporter that uses Jaeger's Zipkin-V2-compatible HTTP endpoint.
-    public static func zipkin(
+    public static func zipkinv2(
         collectorHost: String,
         collectorPort: UInt,
         userAgent: String = "Swift Jaeger Tracer Zipkin Span Reporter",
         eventLoopGroup: EventLoopGroup
     ) -> Self {
-        .custom(ZipkinReporter(
+        .custom(ZipkinV2Reporter(
             collectorHost: collectorHost,
             collectorPort: collectorPort,
             userAgent: userAgent,
@@ -41,7 +41,7 @@ extension JaegerTracer.Reporter {
     }
 }
 
-private final class ZipkinReporter: SpanReporter {
+private final class ZipkinV2Reporter: SpanReporter {
     private let eventLoopGroup: EventLoopGroup
     private let jsonEncoder = JSONEncoder()
     private let collectorHost: String

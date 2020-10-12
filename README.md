@@ -59,7 +59,7 @@ https://www.jaegertracing.io/docs/1.20/apis/#zipkin-formats-stable
 > Make sure to set `COLLECTOR_ZIPKIN_HTTP_PORT` accordingly when configuring your Jaeger instance
 
 ```swift
-let reporter = JaegerTracer.Reporter.zipkin(
+let reporter = JaegerTracer.Reporter.zipkinv2(
     collectorHost: "localhost",
     collectorPort: 9411,
     eventLoopGroup: eventLoopGroup
