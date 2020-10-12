@@ -1,6 +1,7 @@
 # Swift Jaeger Client
 
 [![Swift 5.3](https://img.shields.io/badge/Swift-5.3-ED523F.svg?style=flat)](https://swift.org/download/)
+[![Continuous Integration](https://github.com/slashmo/jaeger-client-swift/workflows/CI/badge.svg)](https://github.com/slashmo/jaeger-client-swift/actions?query=workflow%3ACI)
 
 This Swift package provides a **WIP** client for Jaeger Tracing implemented using the
 [Swift Tracing](https://github.com/slashmo/gsoc-swift-tracing) set of APIs.
