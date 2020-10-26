@@ -77,6 +77,7 @@ final class JaegerSpanTests: XCTestCase {
         XCTAssertEqual(span.baggage.traceContext?.parent.traceID, baggage.traceContext?.parent.traceID)
         XCTAssertNotEqual(span.baggage.traceContext?.parent.parentID, baggage.traceContext?.parent.parentID)
         XCTAssertEqual(span.baggage.traceContext?.parent.traceFlags, baggage.traceContext?.parent.traceFlags)
+        XCTAssertEqual(span.links.first?.baggage.traceContext, baggage.traceContext)
     }
 }
 

@@ -20,9 +20,6 @@ import XCTest
 
 final class ZipkinSpanRepresentationTests: XCTestCase {
     func test_encode_span_to_zipkin_json() {
-        var baggage = Baggage.topLevel
-        baggage.traceContext = TraceContext(parent: .random(), state: .none)
-
         let parent = JaegerSpan(
             operationName: "test",
             kind: .client,
@@ -35,10 +32,9 @@ final class ZipkinSpanRepresentationTests: XCTestCase {
             operationName: "test",
             kind: .client,
             startTimestamp: .now(),
-            baggage: baggage,
+            baggage: parent.baggage,
             onReport: { _ in }
         )
-        child.addLink(parent)
         child.attributes["a"] = .string("1")
         child.attributes["b"] = .int(1)
         child.attributes["c"] = .double(1.1)

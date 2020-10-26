@@ -39,20 +39,20 @@ public final class JaegerSpan: Span {
         self.operationName = operationName
         self.kind = kind
         self.startTimestamp = startTimestamp
+        self.onReport = onReport
 
         if baggage.traceContext != nil {
-            var baggage = baggage
-            baggage.traceContext?.regenerateParentID()
-            self.baggage = baggage
+            var childBaggage = baggage
+            childBaggage.traceContext?.regenerateParentID()
+            self.baggage = childBaggage
             self.isRecording = false
+            self.addLink(SpanLink(baggage: baggage))
         } else {
             var baggage = baggage
             baggage.traceContext = TraceContext(parent: .random(), state: .none)
             self.baggage = baggage
             self.isRecording = true
         }
-
-        self.onReport = onReport
     }
 
     public func setStatus(_ status: SpanStatus) {}
