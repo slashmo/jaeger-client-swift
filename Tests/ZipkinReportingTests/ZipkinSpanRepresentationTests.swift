@@ -67,7 +67,7 @@ final class ZipkinSpanRepresentationTests: XCTestCase {
             kind: .client,
             startTimestamp: .now(),
             baggage: baggage,
-            onReport: { _ in }
+            onEnd: { _ in }
         )
 
         XCTAssertNil(span.zipkinRepresentation(forService: "test"))

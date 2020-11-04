@@ -96,6 +96,7 @@ public final class JaegerTracer: Tracer {
             startTimestamp: timestamp,
             baggage: childBaggage
         ) { [weak self] endedSpan in
+            guard endedSpan.isRecording else { return }
             self?.spansToEmit.append(endedSpan)
         }
 
@@ -124,6 +125,7 @@ public final class JaegerTracer: Tracer {
             self.spansToEmit.removeFirst(spans.count)
             return spans
         }
+        guard !spansToFlush.isEmpty else { return self.eventLoop.makeSucceededFuture(()) }
         return self.reporter.flush(spans: spansToFlush, inService: self.settings.serviceName)
     }
 }

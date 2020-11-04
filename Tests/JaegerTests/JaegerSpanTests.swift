@@ -19,7 +19,7 @@ import XCTest
 
 final class JaegerSpanTests: XCTestCase {
     func test_recordError_sets_exception_attributes() {
-        let span = JaegerSpan()
+        let span = JaegerSpan(sampled: false, onEnd: { _ in })
         XCTAssertEqual(span.attributes, [:])
 
         span.recordError(TestError.test)
@@ -29,10 +29,21 @@ final class JaegerSpanTests: XCTestCase {
         ])
     }
 
-    func test_calls_report_on_end() {
+    func test_calls_onEnd_if_sampled() {
         var reportedSpan: JaegerSpan?
 
-        let span = JaegerSpan { span in
+        let span = JaegerSpan(sampled: true) { span in
+            reportedSpan = span
+        }
+        span.end()
+
+        XCTAssert(reportedSpan === span)
+    }
+
+    func test_calls_onEnd_if_not_sampled() {
+        var reportedSpan: JaegerSpan?
+
+        let span = JaegerSpan(sampled: false) { span in
             reportedSpan = span
         }
         span.end()
@@ -43,7 +54,7 @@ final class JaegerSpanTests: XCTestCase {
     func test_calls_report_on_end_only_once() {
         var invocationCount = 0
 
-        let span = JaegerSpan { _ in
+        let span = JaegerSpan(sampled: true) { _ in
             invocationCount += 1
         }
 
@@ -56,11 +67,12 @@ final class JaegerSpanTests: XCTestCase {
 }
 
 extension JaegerSpan {
-    fileprivate convenience init(
-        baggage: Baggage = .topLevel,
-        onReport: @escaping (JaegerSpan) -> Void = { _ in }
-    ) {
-        self.init(operationName: "test", kind: .server, startTimestamp: .now(), baggage: baggage, onReport: onReport)
+    fileprivate convenience init(sampled: Bool, onEnd: @escaping (JaegerSpan) -> Void) {
+        var baggage = Baggage.topLevel
+        var traceContext = TraceContext(parent: .random(), state: .none)
+        traceContext.sampled = sampled
+        baggage.traceContext = traceContext
+        self.init(operationName: "test", kind: .client, startTimestamp: .now(), baggage: baggage, onEnd: onEnd)
     }
 }
 

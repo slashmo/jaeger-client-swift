@@ -31,19 +31,19 @@ public final class JaegerSpan: Span {
     public private(set) var links = [SpanLink]()
 
     private let lock = Lock()
-    private let onReport: (JaegerSpan) -> Void
+    private let onEnd: (JaegerSpan) -> Void
 
     init(
         operationName: String,
         kind: SpanKind,
         startTimestamp: Timestamp,
         baggage: Baggage,
-        onReport: @escaping (JaegerSpan) -> Void
+        onEnd: @escaping (JaegerSpan) -> Void
     ) {
         self.operationName = operationName
         self.kind = kind
         self.startTimestamp = startTimestamp
-        self.onReport = onReport
+        self.onEnd = onEnd
         self.baggage = baggage
     }
 
@@ -68,7 +68,7 @@ public final class JaegerSpan: Span {
         self.lock.withLockVoid {
             guard self.endTimestamp == nil else { return }
             self.endTimestamp = timestamp
-            self.onReport(self)
+            self.onEnd(self)
         }
     }
 }
