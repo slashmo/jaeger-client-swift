@@ -14,27 +14,24 @@
 import Baggage
 import Foundation
 @testable import Jaeger
+import NIO
 import W3CTraceContext
 import XCTest
 @testable import ZipkinReporting
 
 final class ZipkinSpanRepresentationTests: XCTestCase {
     func test_encode_span_to_zipkin_json() {
-        let parent = JaegerSpan(
-            operationName: "test",
-            kind: .client,
-            startTimestamp: .now(),
-            baggage: .topLevel,
-            onReport: { _ in }
+        let eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+        let settings = JaegerTracer.Settings(
+            serviceName: "test",
+            reporter: .custom(NoOpSpanReporter(eventLoop: eventLoopGroup.next())),
+            sampler: ConstantSampler(samples: false)
         )
+        let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
-        let child = JaegerSpan(
-            operationName: "test",
-            kind: .client,
-            startTimestamp: .now(),
-            baggage: parent.baggage,
-            onReport: { _ in }
-        )
+        let parent = tracer.startSpan(named: "parent", baggage: .topLevel, ofKind: .client) as! JaegerSpan
+        let child = tracer.startSpan(named: "child", baggage: parent.baggage, ofKind: .server) as! JaegerSpan
+
         child.attributes["a"] = .string("1")
         child.attributes["b"] = .int(1)
         child.attributes["c"] = .double(1.1)
@@ -45,11 +42,13 @@ final class ZipkinSpanRepresentationTests: XCTestCase {
 
         let zipkinRepresentation = child.zipkinRepresentation(forService: "test")
 
+        XCTAssertNotNil(zipkinRepresentation)
         XCTAssertEqual(zipkinRepresentation?.id, child.baggage.traceContext?.parent.parentID)
         XCTAssertEqual(zipkinRepresentation?.traceID, child.baggage.traceContext?.parent.traceID)
+        XCTAssertNotNil(zipkinRepresentation?.parentID)
         XCTAssertEqual(zipkinRepresentation?.parentID, parent.baggage.traceContext?.parent.parentID)
-        XCTAssertEqual(zipkinRepresentation?.name, "test")
-        XCTAssertEqual(zipkinRepresentation?.kind, .client)
+        XCTAssertEqual(zipkinRepresentation?.name, "child")
+        XCTAssertEqual(zipkinRepresentation?.kind, .server)
         XCTAssertEqual(zipkinRepresentation?.localEndpoint.serviceName, "test")
         XCTAssertEqual(zipkinRepresentation?.tags["a"], "1")
         XCTAssertEqual(zipkinRepresentation?.tags["b"], "1")
@@ -72,5 +71,17 @@ final class ZipkinSpanRepresentationTests: XCTestCase {
         )
 
         XCTAssertNil(span.zipkinRepresentation(forService: "test"))
+    }
+}
+
+private final class NoOpSpanReporter: SpanReporter {
+    private let eventLoop: EventLoop
+
+    init(eventLoop: EventLoop) {
+        self.eventLoop = eventLoop
+    }
+
+    func flush(spans: ArraySlice<JaegerSpan>, inService serviceName: String) -> EventLoopFuture<Void> {
+        self.eventLoop.makeSucceededFuture(())
     }
 }

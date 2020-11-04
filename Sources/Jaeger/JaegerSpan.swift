@@ -18,7 +18,11 @@ import W3CTraceContext
 
 public final class JaegerSpan: Span {
     public var attributes: SpanAttributes = [:]
-    public private(set) var isRecording: Bool
+
+    public var isRecording: Bool {
+        self.baggage.traceContext?.sampled ?? false
+    }
+
     public let startTimestamp: Timestamp
     public let baggage: Baggage
     public private(set) var endTimestamp: Timestamp?
@@ -40,19 +44,7 @@ public final class JaegerSpan: Span {
         self.kind = kind
         self.startTimestamp = startTimestamp
         self.onReport = onReport
-
-        if baggage.traceContext != nil {
-            var childBaggage = baggage
-            childBaggage.traceContext?.regenerateParentID()
-            self.baggage = childBaggage
-            self.isRecording = false
-            self.addLink(SpanLink(baggage: baggage))
-        } else {
-            var baggage = baggage
-            baggage.traceContext = TraceContext(parent: .random(), state: .none)
-            self.baggage = baggage
-            self.isRecording = true
-        }
+        self.baggage = baggage
     }
 
     public func setStatus(_ status: SpanStatus) {}
