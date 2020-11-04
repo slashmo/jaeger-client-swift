@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public final class ConstantSampler: Sampler {
+public struct ConstantSampler: Sampler {
     private let samples: Bool
 
     public init(samples: Bool) {
