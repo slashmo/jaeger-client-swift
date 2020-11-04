@@ -10,7 +10,7 @@ let package = Package(
     dependencies: [
         .package(name: "swift-context", url: "https://github.com/slashmo/gsoc-swift-baggage-context", from: "0.5.0"),
         .package(url: "https://github.com/slashmo/gsoc-swift-tracing.git", .branch("main")),
-        .package(url: "https://github.com/slashmo/swift-w3c-trace-context.git", from: "0.4.0"),
+        .package(url: "https://github.com/slashmo/swift-w3c-trace-context.git", from: "0.5.0"),
         .package(url: "https://github.com/slashmo/swift-nio.git", .branch("feature/baggage-context")),
     ],
     targets: [

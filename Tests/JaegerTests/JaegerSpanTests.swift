@@ -18,12 +18,6 @@ import W3CTraceContext
 import XCTest
 
 final class JaegerSpanTests: XCTestCase {
-    func test_adds_trace_context_if_not_yet_recorded() {
-        let span = JaegerSpan()
-
-        XCTAssertNotNil(span.baggage.traceContext)
-    }
-
     func test_recordError_sets_exception_attributes() {
         let span = JaegerSpan()
         XCTAssertEqual(span.attributes, [:])
@@ -58,26 +52,6 @@ final class JaegerSpanTests: XCTestCase {
         span.end()
 
         XCTAssertEqual(invocationCount, 1)
-    }
-
-    func test_creates_trace_context_for_root_span() {
-        let span = JaegerSpan()
-
-        XCTAssertNotNil(span.baggage.traceContext)
-    }
-
-    func test_regenerates_parent_id_in_existing_trace_context() {
-        var baggage = Baggage.topLevel
-        baggage.traceContext = TraceContext(parent: .random(), state: TraceState(rawValue: "rojo=123")!)
-
-        let span = JaegerSpan(baggage: baggage)
-
-        XCTAssertNotNil(span.baggage.traceContext)
-        XCTAssertEqual(span.baggage.traceContext?.state, baggage.traceContext?.state)
-        XCTAssertEqual(span.baggage.traceContext?.parent.traceID, baggage.traceContext?.parent.traceID)
-        XCTAssertNotEqual(span.baggage.traceContext?.parent.parentID, baggage.traceContext?.parent.parentID)
-        XCTAssertEqual(span.baggage.traceContext?.parent.traceFlags, baggage.traceContext?.parent.traceFlags)
-        XCTAssertEqual(span.links.first?.baggage.traceContext, baggage.traceContext)
     }
 }
 

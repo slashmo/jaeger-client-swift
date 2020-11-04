@@ -18,6 +18,7 @@ extension JaegerTracer {
     public struct Settings {
         public let serviceName: String
         public let reporter: Reporter
+        public let sampler: Sampler
         public let logger: Logger
 
         public var flushInterval: TimeAmount
@@ -28,6 +29,7 @@ extension JaegerTracer {
         public init(
             serviceName: String,
             reporter: Reporter,
+            sampler: Sampler,
             logger: Logger = Logger(label: "JaegerTracer"),
             flushInterval: TimeAmount = .seconds(1),
             flushTimeout: TimeAmount = .seconds(5),
@@ -36,6 +38,7 @@ extension JaegerTracer {
         ) {
             self.serviceName = serviceName
             self.reporter = reporter
+            self.sampler = sampler
             self.logger = logger
             self.flushInterval = flushInterval
             self.flushTimeout = flushTimeout
