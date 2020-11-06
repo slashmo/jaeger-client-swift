@@ -44,7 +44,7 @@ final class ZipkinSpanRepresentationTests: XCTestCase {
 
         XCTAssertNotNil(zipkinRepresentation)
         XCTAssertEqual(zipkinRepresentation?.id, child.baggage.traceContext?.parent.parentID)
-        XCTAssertEqual(zipkinRepresentation?.traceID, child.baggage.traceContext?.parent.traceID)
+        XCTAssertEqual(zipkinRepresentation?.traceID, child.baggage.traceContext?.parent.traceID.description)
         XCTAssertNotNil(zipkinRepresentation?.parentID)
         XCTAssertEqual(zipkinRepresentation?.parentID, parent.baggage.traceContext?.parent.parentID)
         XCTAssertEqual(zipkinRepresentation?.name, "child")

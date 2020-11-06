@@ -44,7 +44,7 @@ extension JaegerSpan {
 
         return ZipkinRepresentation(
             id: traceContext.parent.parentID,
-            traceID: traceContext.parent.traceID,
+            traceID: String(describing: traceContext.parent.traceID),
             parentID: self.links.first?.baggage.traceContext?.parent.parentID,
             name: self.operationName,
             timestamp: self.startTimestamp.microsSinceEpoch,

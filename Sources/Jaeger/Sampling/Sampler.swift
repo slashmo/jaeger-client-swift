@@ -12,12 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 import Tracing
+import W3CTraceContext
 
 public struct SamplingStatus {
-    var isSampled: Bool
-    var attributes: SpanAttributes
+    public let isSampled: Bool
+    public let attributes: SpanAttributes
 }
 
 public protocol Sampler {
-    func sample(operationName: String, traceID: String) -> SamplingStatus
+    func sample(operationName: String, traceID: TraceID) -> SamplingStatus
 }

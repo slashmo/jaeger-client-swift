@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import W3CTraceContext
+
 public struct ConstantSampler: Sampler {
     private let samples: Bool
 
@@ -18,7 +20,7 @@ public struct ConstantSampler: Sampler {
         self.samples = samples
     }
 
-    public func sample(operationName: String, traceID: String) -> SamplingStatus {
+    public func sample(operationName: String, traceID: TraceID) -> SamplingStatus {
         SamplingStatus(isSampled: self.samples, attributes: [
             "sampler.type": "const",
             "sampler.param": self.samples ? "true" : "false",
