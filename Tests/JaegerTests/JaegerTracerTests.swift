@@ -11,12 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Baggage
 import Instrumentation
 import Jaeger
 import NIO
-import NIOHTTP1
-import NIOInstrumentation
 import Tracing
 import W3CTraceContext
 import XCTest
@@ -33,7 +30,7 @@ final class JaegerTracerTests: XCTestCase {
         tracer.extract(
             [TraceParent.headerName: traceContext.parent.rawValue, TraceState.headerName: traceContext.state.rawValue],
             into: &baggage,
-            using: HTTPHeadersExtractor()
+            using: TestCarrierExtractor()
         )
 
         XCTAssertEqual(baggage.traceContext, traceContext)
@@ -48,7 +45,7 @@ final class JaegerTracerTests: XCTestCase {
         tracer.extract(
             [TraceParent.headerName: traceContext.parent.rawValue],
             into: &baggage,
-            using: HTTPHeadersExtractor()
+            using: TestCarrierExtractor()
         )
 
         XCTAssertEqual(baggage.traceContext, traceContext)
@@ -59,7 +56,7 @@ final class JaegerTracerTests: XCTestCase {
 
         var baggage = Baggage.topLevel
 
-        tracer.extract([:], into: &baggage, using: HTTPHeadersExtractor())
+        tracer.extract([:], into: &baggage, using: TestCarrierExtractor())
 
         XCTAssertNil(baggage.traceContext)
     }
@@ -70,30 +67,30 @@ final class JaegerTracerTests: XCTestCase {
         let traceContext = TraceContext(parent: .random(), state: .none)
         var baggage = Baggage.topLevel
         baggage.traceContext = traceContext
-        var headers = HTTPHeaders()
+        var headers = TestCarrier()
 
-        tracer.inject(baggage, into: &headers, using: HTTPHeadersInjector())
+        tracer.inject(baggage, into: &headers, using: TestCarrierInjector())
 
         XCTAssertEqual(headers.count, 2)
-        XCTAssertEqual(headers.first(name: TraceParent.headerName), traceContext.parent.rawValue)
-        XCTAssertEqual(headers.first(name: TraceState.headerName), traceContext.state.rawValue)
+        XCTAssertEqual(headers[TraceParent.headerName], traceContext.parent.rawValue)
+        XCTAssertEqual(headers[TraceState.headerName], traceContext.state.rawValue)
     }
 
     func test_inject_missing_w3c_trace_context_into_headers() throws {
         let tracer: JaegerTracer = .test()
 
         let baggage = Baggage.topLevel
-        var headers = HTTPHeaders()
+        var headers = TestCarrier()
 
-        tracer.inject(baggage, into: &headers, using: HTTPHeadersInjector())
+        tracer.inject(baggage, into: &headers, using: TestCarrierInjector())
 
-        XCTAssert(headers.isEmpty)
+        XCTAssert(headers.count == 0)
     }
 
     func test_creates_trace_context_for_root_span() throws {
         let tracer: JaegerTracer = .test()
 
-        let span = tracer.startSpan(named: "test", baggage: .topLevel, ofKind: .server)
+        let span = tracer.startSpan("test", baggage: .topLevel, ofKind: .server)
 
         XCTAssertNotNil(span.baggage.traceContext)
     }
@@ -103,8 +100,8 @@ final class JaegerTracerTests: XCTestCase {
 
         var childBaggage = Baggage.topLevel
         childBaggage.traceContext = TraceContext(parent: .random(), state: TraceState(rawValue: "rojo=123")!)
-        let parent = tracer.startSpan(named: "client", baggage: childBaggage, ofKind: .client)
-        let child = tracer.startSpan(named: "server", baggage: parent.baggage, ofKind: .server) as! JaegerSpan
+        let parent = tracer.startSpan("client", baggage: childBaggage, ofKind: .client)
+        let child = tracer.startSpan("server", baggage: parent.baggage, ofKind: .server) as! JaegerSpan
 
         XCTAssertNotNil(child.baggage.traceContext)
         XCTAssertEqual(child.baggage.traceContext?.state, childBaggage.traceContext?.state)
@@ -119,7 +116,7 @@ final class JaegerTracerTests: XCTestCase {
     func test_flushes_sampled_spans() throws {
         let (tracer, reporter) = JaegerTracer.test(sampler: ConstantSampler(samples: true))
 
-        let spans = (0 ..< 10).map { _ in tracer.startSpan(named: "test", baggage: .topLevel) }
+        let spans = (0 ..< 10).map { _ in tracer.startSpan("test", baggage: .topLevel) }
         spans.forEach { $0.end() }
 
         tracer.forceFlush()
@@ -134,7 +131,7 @@ final class JaegerTracerTests: XCTestCase {
     func test_does_not_flush_unsampled_spans() throws {
         let (tracer, reporter) = JaegerTracer.test(sampler: ConstantSampler(samples: false))
 
-        let spans = (0 ..< 10).map { _ in tracer.startSpan(named: "test", baggage: .topLevel) }
+        let spans = (0 ..< 10).map { _ in tracer.startSpan("test", baggage: .topLevel) }
         spans.forEach { $0.end() }
 
         tracer.forceFlush()

@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Baggage
 @testable import Jaeger
 import Tracing
 import W3CTraceContext

@@ -15,6 +15,7 @@ import Baggage
 import Foundation
 @testable import Jaeger
 import NIO
+import Tracing
 import W3CTraceContext
 import XCTest
 @testable import ZipkinReporting
@@ -29,15 +30,19 @@ final class ZipkinSpanRepresentationTests: XCTestCase {
         )
         let tracer = JaegerTracer(settings: settings, group: eventLoopGroup)
 
-        let parent = tracer.startSpan(named: "parent", baggage: .topLevel, ofKind: .client) as! JaegerSpan
-        let child = tracer.startSpan(named: "child", baggage: parent.baggage, ofKind: .server) as! JaegerSpan
+        let parent = tracer.startSpan("parent", baggage: .topLevel, ofKind: .client) as! JaegerSpan
+        let child = tracer.startSpan("child", baggage: parent.baggage, ofKind: .server) as! JaegerSpan
 
-        child.attributes["a"] = .string("1")
-        child.attributes["b"] = .int(1)
-        child.attributes["c"] = .double(1.1)
-        child.attributes["d"] = .bool(true)
-        child.attributes["e"] = .array([.string("1"), .string("2")])
-        child.attributes["f"] = .stringConvertible("1")
+        child.attributes["a"] = "1"
+        child.attributes["b"] = 1
+        child.attributes["c"] = 1.1
+        child.attributes["d"] = true
+        child.attributes["e"] = SpanAttribute.stringConvertible("1")
+        child.attributes["f"] = ["foo", "hello, oh no"]
+        child.attributes["g"] = [1, 2]
+        child.attributes["h"] = [1.1, 2.2]
+        child.attributes["i"] = [true, false]
+        child.attributes["j"] = SpanAttribute.stringConvertibleArray(["foo", "hello, oh no"])
         child.end()
 
         let zipkinRepresentation = child.zipkinRepresentation(forService: "test")
@@ -54,8 +59,12 @@ final class ZipkinSpanRepresentationTests: XCTestCase {
         XCTAssertEqual(zipkinRepresentation?.tags["b"], "1")
         XCTAssertEqual(zipkinRepresentation?.tags["c"], "1.1")
         XCTAssertEqual(zipkinRepresentation?.tags["d"], "true")
-        XCTAssertEqual(zipkinRepresentation?.tags["e"], "[1, 2]")
-        XCTAssertEqual(zipkinRepresentation?.tags["f"], "1")
+        XCTAssertEqual(zipkinRepresentation?.tags["e"], "1")
+        XCTAssertEqual(zipkinRepresentation?.tags["f"], #"["foo", "hello, oh no"]"#)
+        XCTAssertEqual(zipkinRepresentation?.tags["g"], "[1, 2]")
+        XCTAssertEqual(zipkinRepresentation?.tags["h"], "[1.1, 2.2]")
+        XCTAssertEqual(zipkinRepresentation?.tags["i"], "[true, false]")
+        XCTAssertEqual(zipkinRepresentation?.tags["j"], #"["foo", "hello, oh no"]"#)
     }
 
     func test_encode_span_to_zipkin_json_without_ending() {

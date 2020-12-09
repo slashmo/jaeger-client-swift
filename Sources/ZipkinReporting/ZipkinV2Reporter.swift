@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-import BaggageContext
 import Foundation
 import Jaeger
 import Logging

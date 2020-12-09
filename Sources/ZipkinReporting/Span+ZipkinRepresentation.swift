@@ -47,8 +47,8 @@ extension JaegerSpan {
             traceID: String(describing: traceContext.parent.traceID),
             parentID: self.links.first?.baggage.traceContext?.parent.parentID,
             name: self.operationName,
-            timestamp: self.startTimestamp.microsSinceEpoch,
-            duration: endTimestamp.microsSinceEpoch - self.startTimestamp.microsSinceEpoch,
+            timestamp: Int64(bitPattern: self.startTimestamp.rawValue),
+            duration: Int64(bitPattern: endTimestamp.rawValue) - Int64(bitPattern: self.startTimestamp.rawValue),
             kind: kind,
             localEndpoint: .init(serviceName: serviceName),
             remoteEndpoint: nil,
@@ -68,12 +68,18 @@ extension SpanAttribute {
             return "\(value)"
         case .bool(let value):
             return "\(value)"
-        case .array(let value):
-            return "[\(value.map { $0.asString() }.joined(separator: ", "))]"
         case .stringConvertible(let value):
             return "\(value)"
-        case .__namespace:
-            fatalError("__namespace MUST NOT be stored not can be extracted from using anyValue")
+        case .intArray(let value):
+            return "[\(value.map { String($0) }.joined(separator: ", "))]"
+        case .doubleArray(let value):
+            return "[\(value.map { String($0) }.joined(separator: ", "))]"
+        case .boolArray(let value):
+            return "[\(value.map { String($0) }.joined(separator: ", "))]"
+        case .stringArray(let value):
+            return "[\(value.map { #""\#($0)""# }.joined(separator: ", "))]"
+        case .stringConvertibleArray(let value):
+            return "[\(value.map { #""\#(String(describing: $0))""# }.joined(separator: ", "))]"
         }
     }
 }

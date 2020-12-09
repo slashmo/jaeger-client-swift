@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Baggage
+import struct Dispatch.DispatchWallTime
 import NIOConcurrencyHelpers
 import Tracing
 import W3CTraceContext
@@ -23,9 +23,9 @@ public final class JaegerSpan: Span {
         self.baggage.traceContext?.sampled ?? false
     }
 
-    public let startTimestamp: Timestamp
+    public let startTimestamp: DispatchWallTime
     public let baggage: Baggage
-    public private(set) var endTimestamp: Timestamp?
+    public private(set) var endTimestamp: DispatchWallTime?
     public let operationName: String
     public let kind: SpanKind
     public private(set) var links = [SpanLink]()
@@ -36,7 +36,7 @@ public final class JaegerSpan: Span {
     init(
         operationName: String,
         kind: SpanKind,
-        startTimestamp: Timestamp,
+        startTimestamp: DispatchWallTime,
         baggage: Baggage,
         onEnd: @escaping (JaegerSpan) -> Void
     ) {
@@ -53,8 +53,8 @@ public final class JaegerSpan: Span {
 
     public func recordError(_ error: Error) {
         self.lock.withLockVoid {
-            attributes["exception.type"] = .string(String(describing: type(of: error)))
-            attributes["exception.message"] = .string(String(describing: error))
+            attributes["exception.type"] = String(describing: type(of: error))
+            attributes["exception.message"] = String(describing: error)
         }
     }
 
@@ -64,7 +64,7 @@ public final class JaegerSpan: Span {
         }
     }
 
-    public func end(at timestamp: Timestamp) {
+    public func end(at timestamp: DispatchWallTime) {
         self.lock.withLockVoid {
             guard self.endTimestamp == nil else { return }
             self.endTimestamp = timestamp

@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import BaggageContext
+import struct Dispatch.DispatchWallTime
 import Instrumentation
 import Logging
 import NIO
@@ -46,31 +46,26 @@ public final class JaegerTracer: Tracer {
         }
     }
 
-    public func extract<Carrier, Extractor>(_ carrier: Carrier, into baggage: inout Baggage, using extractor: Extractor)
+    public func extract<Carrier, Extract>(_ carrier: Carrier, into baggage: inout Baggage, using extractor: Extract)
         where
-        Carrier == Extractor.Carrier,
-        Extractor: ExtractorProtocol {
+        Carrier == Extract.Carrier,
+        Extract: Extractor {
         if let parent = extractor.extract(key: TraceParent.headerName, from: carrier) {
             let state = extractor.extract(key: TraceState.headerName, from: carrier) ?? ""
             baggage.traceContext = TraceContext(parent: parent, state: state)
         }
     }
 
-    public func inject<Carrier, Injector>(_ baggage: Baggage, into carrier: inout Carrier, using injector: Injector)
+    public func inject<Carrier, Inject>(_ baggage: Baggage, into carrier: inout Carrier, using injector: Inject)
         where
-        Carrier == Injector.Carrier,
-        Injector: InjectorProtocol {
+        Carrier == Inject.Carrier,
+        Inject: Injector {
         guard let traceContext = baggage.traceContext else { return }
         injector.inject(traceContext.parent.rawValue, forKey: TraceParent.headerName, into: &carrier)
         injector.inject(traceContext.state.rawValue, forKey: TraceState.headerName, into: &carrier)
     }
 
-    public func startSpan(
-        named operationName: String,
-        baggage: Baggage,
-        ofKind kind: SpanKind,
-        at timestamp: Timestamp
-    ) -> Span {
+    public func startSpan(_ operationName: String, baggage: Baggage, ofKind kind: SpanKind, at time: DispatchWallTime) -> Span {
         let parentBaggage = baggage
         var childBaggage = baggage
         var samplingAttributes: SpanAttributes = [:]
@@ -93,7 +88,7 @@ public final class JaegerTracer: Tracer {
         let span = JaegerSpan(
             operationName: operationName,
             kind: kind,
-            startTimestamp: timestamp,
+            startTimestamp: time,
             baggage: childBaggage
         ) { [weak self] endedSpan in
             guard endedSpan.isRecording else { return }
@@ -105,11 +100,7 @@ public final class JaegerTracer: Tracer {
             span.addLink(SpanLink(baggage: parentBaggage))
         }
 
-        // add sampling attributes
-        samplingAttributes.forEach { key, attribute in
-            // TODO: `SpanAttributes.merge`?
-            span.attributes[key] = attribute
-        }
+        span.attributes.merge(samplingAttributes)
 
         return span
     }

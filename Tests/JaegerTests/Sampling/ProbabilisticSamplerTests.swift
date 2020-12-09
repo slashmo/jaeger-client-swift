@@ -39,7 +39,7 @@ final class ProbabilisticSamplerTests: XCTestCase {
 
         let samplingStatus = sampler.sample(operationName: "test", traceID: .random())
 
-        XCTAssertEqual(samplingStatus.attributes["sampler.type"], "probabilistic")
-        XCTAssertEqual(samplingStatus.attributes["sampler.param"], 0.1)
+        XCTAssertEqual(samplingStatus.attributes["sampler.type"]?.toSpanAttribute(), "probabilistic")
+        XCTAssertEqual(samplingStatus.attributes["sampler.param"]?.toSpanAttribute(), 0.1)
     }
 }
